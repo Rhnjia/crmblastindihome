@@ -46,10 +46,10 @@ REPORT_FILE: Path     = REPORT_FOLDER / "laporan_blast.xlsx"
 # ──────────────────────────────────────────────
 # Flask Config
 # ──────────────────────────────────────────────
-FLASK_SECRET_KEY: str = "crm-blast-indihome-telkomsel-2024"
-FLASK_HOST: str       = "127.0.0.1"
-FLASK_PORT: int       = 5000
-FLASK_DEBUG: bool     = True
+FLASK_SECRET_KEY: str = os.environ.get("SECRET_KEY", "crm-blast-indihome-telkomsel-2024")
+FLASK_HOST: str       = os.environ.get("FLASK_HOST", "127.0.0.1")
+FLASK_PORT: int       = int(os.environ.get("PORT", os.environ.get("FLASK_PORT", "5000")))
+FLASK_DEBUG: bool     = os.environ.get("FLASK_DEBUG", "true").lower() == "true"
 
 # ──────────────────────────────────────────────
 # Selenium / Chrome Config

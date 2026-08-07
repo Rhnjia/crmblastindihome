@@ -484,6 +484,41 @@ def server_error(e):
 
 
 # ──────────────────────────────────────────────
+# QR Code Endpoint (untuk cloud deployment)
+# Digunakan saat pertama kali deploy di Railway,
+# agar admin bisa scan QR WhatsApp dari browser.
+# ──────────────────────────────────────────────
+
+@app.route("/api/qr-screenshot", methods=["GET"])
+def qr_screenshot():
+    """
+    Ambil screenshot Chrome saat ini sebagai base64.
+    Digunakan untuk scan QR WhatsApp Web di cloud.
+    GET /api/qr-screenshot
+    """
+    try:
+        blast = engine._blast
+        if not blast or not blast.driver:
+            return jsonify({
+                "ok": False,
+                "message": "Browser belum aktif. Mulai blast terlebih dahulu untuk membuka Chrome.",
+                "screenshot": None
+            }), 200
+
+        screenshot_b64 = blast.driver.get_screenshot_as_base64()
+        return jsonify({
+            "ok": True,
+            "screenshot": screenshot_b64,
+            "message": "Screenshot berhasil diambil."
+        })
+    except Exception as e:
+        log.error(f"[QR_SCREENSHOT] Error: {e}")
+        return jsonify({"ok": False, "message": str(e), "screenshot": None}), 500
+
+
+
+
+# ──────────────────────────────────────────────
 # Entry Point
 # ──────────────────────────────────────────────
 

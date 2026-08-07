@@ -550,10 +550,21 @@ class WhatsAppBlast:
         options.add_argument("--disable-notifications")
         options.add_argument("--disable-popup-blocking")
         options.add_argument("--disable-infobars")
-        options.add_argument("--start-maximized")
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--mute-audio")
         options.add_argument("--disable-extensions")
+
+        # ── Headless mode untuk cloud/Railway deployment ──────────────────
+        # Set env CHROME_HEADLESS=true di Railway untuk aktifkan headless
+        is_headless = os.environ.get("CHROME_HEADLESS", "false").lower() == "true"
+        if is_headless:
+            options.add_argument("--headless=new")
+            options.add_argument("--window-size=1920,1080")
+            options.add_argument("--virtual-time-budget=5000")
+            log.info("[CHROME_OPTIONS] Mode: HEADLESS (cloud deployment)")
+        else:
+            options.add_argument("--start-maximized")
+            log.info("[CHROME_OPTIONS] Mode: GUI (local)")
 
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
