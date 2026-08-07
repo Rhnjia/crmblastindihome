@@ -306,18 +306,22 @@ class WhatsAppBlast:
         Chrome.exe yang terkait profile lock akan mati sendiri
         setelah chromedriver-nya mati.
         """
-        if os.name != "nt":
-            return
         try:
             import subprocess
-            # HANYA kill chromedriver.exe orphan — bukan chrome.exe
-            result = subprocess.run(
-                ["taskkill", "/F", "/IM", "chromedriver.exe", "/T"],
-                capture_output=True, timeout=10
-            )
-            log.debug(f"[CLEANUP] taskkill chromedriver.exe: returncode={result.returncode}")
+            if os.name == "nt":
+                result = subprocess.run(
+                    ["taskkill", "/F", "/IM", "chromedriver.exe", "/T"],
+                    capture_output=True, timeout=10
+                )
+                log.debug(f"[CLEANUP] taskkill chromedriver.exe: returncode={result.returncode}")
+            else:
+                result = subprocess.run(
+                    ["pkill", "-f", "chromedriver"],
+                    capture_output=True, timeout=10
+                )
+                log.debug(f"[CLEANUP] pkill chromedriver: returncode={result.returncode}")
         except Exception as e:
-            log.debug(f"[CLEANUP] taskkill gagal: {e}")
+            log.debug(f"[CLEANUP] process kill gagal: {e}")
         # Jeda cukup agar OS melepas lock files setelah proses mati
         time.sleep(2)
 
@@ -560,7 +564,8 @@ class WhatsAppBlast:
         if is_headless:
             options.add_argument("--headless=new")
             options.add_argument("--window-size=1920,1080")
-            options.add_argument("--virtual-time-budget=5000")
+            options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
+            options.add_argument("--disable-software-rasterizer")
             log.info("[CHROME_OPTIONS] Mode: HEADLESS (cloud deployment)")
         else:
             options.add_argument("--start-maximized")
@@ -595,7 +600,7 @@ class WhatsAppBlast:
                 log.info(f"[OPEN_WA] Current URL setelah get(): {current_url}")
                 break
             except Exception as e:
-                log.warning(f"[DRIVER] Gagal load WA (attempt {attempt+1}): {e}")
+                log.warning(f"[DRIVER] Gagal load WA (attempt {attempt+1}): {e}\n{traceback.format_exc()}")
                 if attempt == 1:
                     log.error("[DRIVER] Gagal membuka WhatsApp Web setelah 2 percobaan.")
                     return False
