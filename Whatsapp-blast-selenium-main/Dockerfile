@@ -63,4 +63,4 @@ ENV FLASK_PORT=5000
 ENV FLASK_DEBUG=false
 
 # ── Start app via gunicorn ────────────────────────────────────
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "120", "--workers", "1", "--threads", "4", "app:app"]
+ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:${PORT:-5000}", "--timeout", "120", "--workers", "1", "--threads", "4", "app:app"]
