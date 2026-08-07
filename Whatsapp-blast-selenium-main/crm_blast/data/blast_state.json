@@ -1,0 +1,41 @@
+{
+  "current_index": 2,
+  "total": 3,
+  "success": 2,
+  "failed": 1,
+  "skipped": 0,
+  "status": "DONE",
+  "timestamp": "2026-08-07T09:17:57.048862",
+  "results": [
+    {
+      "num": 1,
+      "nomor_indihome": "121869208838",
+      "nomor_wa": "6285797452721",
+      "nama": "",
+      "status": "SUCCESS",
+      "jam_kirim": "09:17:03",
+      "percobaan": 1,
+      "keterangan": "SUCCESS"
+    },
+    {
+      "num": 2,
+      "nomor_indihome": "122806200222",
+      "nomor_wa": "628952863078",
+      "nama": "",
+      "status": "FAILED",
+      "jam_kirim": "09:17:24",
+      "percobaan": 1,
+      "keterangan": "INVALID_NUMBER"
+    },
+    {
+      "num": 3,
+      "nomor_indihome": "122869227461",
+      "nomor_wa": "6285151647715",
+      "nama": "",
+      "status": "SUCCESS",
+      "jam_kirim": "09:17:57",
+      "percobaan": 1,
+      "keterangan": "SUCCESS"
+    }
+  ]
+}

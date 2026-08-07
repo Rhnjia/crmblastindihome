@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CRM Blast IndiHome — Dashboard pengiriman pesan WhatsApp otomatis untuk tim CRM PT Telkomsel Branch Karawang." />
+  <title>CRM Blast IndiHome — Telkomsel</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     NAVBAR
+════════════════════════════════════ -->
+<nav class="navbar navbar-light" id="topNavbar" style="height:56px;">
+  <div class="container-fluid px-4">
+    <div class="d-flex align-items-center gap-3">
+      <div class="navbar-brand-logo">
+        <i class="bi bi-broadcast-pin"></i>
+      </div>
+      <div>
+        <span class="nav-brand-name">CRM Blast IndiHome</span>
+        <span class="nav-brand-sub">PT Telkomsel Branch Karawang</span>
+      </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+      <div class="nav-status-pill" id="navStatusPill">
+        <span class="dot"></span>
+        <span id="navStatusText">IDLE</span>
+      </div>
+      <span id="navClock"></span>
+    </div>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════
+     APP LAYOUT
+════════════════════════════════════ -->
+<div class="app-layout">
+
+  <!-- ══════════════════════════════
+       SIDEBAR
+  ══════════════════════════════ -->
+  <aside class="sidebar">
+
+    <!-- Input Data -->
+    <div class="sidebar-section">
+      <div class="section-title">
+        <i class="bi bi-table"></i>Input Data Pelanggan
+      </div>
+
+      <!-- Method Tabs -->
+      <div class="input-tabs" id="inputMethodTab">
+        <button class="tab-btn active" id="tab-paste" onclick="switchInputMethod('paste')">
+          <i class="bi bi-clipboard2"></i>Paste
+        </button>
+        <button class="tab-btn" id="tab-txt" onclick="switchInputMethod('txt')">
+          <i class="bi bi-file-text"></i>TXT
+        </button>
+        <button class="tab-btn" id="tab-excel" onclick="switchInputMethod('excel')">
+          <i class="bi bi-file-earmark-excel"></i>Excel
+        </button>
+      </div>
+
+      <!-- Paste -->
+      <div id="method-paste">
+        <textarea class="form-control paste-input mb-2" id="pasteInput" rows="5"
+                  placeholder="122874260591 6285797452721&#10;122873205081 6287779908030"
+                  style="height:110px;"></textarea>
+        <div class="text-muted2 small mb-2" style="font-size:.7rem;">
+          Format: <code>NomorIndiHome NomorWA</code> per baris
+        </div>
+        <button class="btn btn-sm w-100" style="background:var(--gray-100);border:1px solid var(--gray-200);color:var(--gray-700);font-size:.8rem;border-radius:var(--radius-sm);" onclick="loadPasteData()">
+          <i class="bi bi-check2 me-1"></i>Muat Data
+        </button>
+      </div>
+
+      <!-- TXT -->
+      <div id="method-txt" class="d-none">
+        <div class="upload-zone" id="dropZoneTxt" onclick="document.getElementById('txtFileInput').click()">
+          <i class="bi bi-file-arrow-up upload-icon"></i>
+          <p class="fw-600 small mb-1">Klik atau drag & drop</p>
+          <p class="text-muted2 mb-0" style="font-size:.72rem;">File .txt — format: NomorIndiHome NomorWA</p>
+          <input type="file" id="txtFileInput" accept=".txt" class="d-none" onchange="uploadDataFile('txt')" />
+        </div>
+      </div>
+
+      <!-- Excel -->
+      <div id="method-excel" class="d-none">
+        <div class="upload-zone" id="dropZoneExcel" onclick="document.getElementById('excelFileInput').click()">
+          <i class="bi bi-file-earmark-spreadsheet upload-icon" style="color:#16A34A;"></i>
+          <p class="fw-600 small mb-1">Klik atau drag & drop</p>
+          <p class="text-muted2 mb-0" style="font-size:.72rem;">File .xlsx — kolom: Nomor IndiHome, Nomor WA, Nama...</p>
+          <input type="file" id="excelFileInput" accept=".xlsx,.xls" class="d-none" onchange="uploadDataFile('excel')" />
+        </div>
+      </div>
+
+      <!-- Data status -->
+      <div class="data-status mt-2 d-none" id="dataStatus">
+        <i class="bi bi-check-circle-fill" style="font-size:.85rem;"></i>
+        <span id="dataStatusText">0 pelanggan dimuat</span>
+      </div>
+    </div>
+
+    <!-- Template Pesan -->
+    <div class="sidebar-section">
+      <div class="section-title">
+        <i class="bi bi-chat-left-text"></i>Template Pesan
+      </div>
+
+      <div class="placeholder-pills">
+        <button class="ph-pill" onclick="insertPlaceholder('{nomor_indihome}')">{nomor_indihome}</button>
+        <button class="ph-pill" onclick="insertPlaceholder('{nama}')">{nama}</button>
+        <button class="ph-pill" onclick="insertPlaceholder('{nomor}')">{nomor}</button>
+        <button class="ph-pill" onclick="insertPlaceholder('{segment}')">{segment}</button>
+        <button class="ph-pill" onclick="insertPlaceholder('{tagihan}')">{tagihan}</button>
+      </div>
+
+      <textarea class="form-control template-input" id="templateInput" rows="8"
+                placeholder="Tulis template pesan...">{{ default_template }}</textarea>
+
+      <div class="d-flex gap-2 mt-2">
+        <button class="btn btn-sm flex-fill" style="background:var(--gray-100);border:1px solid var(--gray-200);color:var(--gray-700);font-size:.78rem;" onclick="previewTemplate()">
+          <i class="bi bi-eye me-1"></i>Preview
+        </button>
+        <button class="btn btn-sm flex-fill" style="background:white;border:1px solid var(--gray-200);color:var(--gray-500);font-size:.78rem;" onclick="clearTemplate()">
+          <i class="bi bi-trash me-1"></i>Hapus
+        </button>
+      </div>
+    </div>
+
+    <!-- Upload Gambar -->
+    <div class="sidebar-section">
+      <div class="section-title">
+        <i class="bi bi-images"></i>Gambar Promo
+        <span class="ms-auto text-muted2" style="font-size:.65rem;font-weight:400;">Opsional</span>
+      </div>
+
+      <div class="upload-zone" id="dropZoneImg" onclick="document.getElementById('imgFileInput').click()" style="padding:1rem;">
+        <i class="bi bi-image upload-icon" style="font-size:1.5rem;"></i>
+        <p class="small fw-600 mb-0">Upload gambar</p>
+        <p class="text-muted2 mb-0" style="font-size:.7rem;">JPG, PNG, WEBP · Multiple</p>
+        <input type="file" id="imgFileInput" accept=".jpg,.jpeg,.png,.webp" multiple class="d-none" onchange="uploadImages()" />
+      </div>
+
+      <div id="imagePreviewContainer" class="image-preview-container"></div>
+
+      <button class="btn btn-sm w-100 mt-2 d-none" id="clearImgBtn" onclick="clearImages()"
+              style="background:white;border:1px solid #FCA5A5;color:var(--danger);font-size:.78rem;border-radius:var(--radius-sm);">
+        <i class="bi bi-x-circle me-1"></i>Hapus Gambar
+      </button>
+    </div>
+
+    <!-- Pengaturan -->
+    <div class="sidebar-section">
+      <div class="section-title">
+        <i class="bi bi-sliders"></i>Pengaturan
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-600" style="font-size:.75rem;color:var(--gray-700);">
+          Delay Antar Nomor
+          <span class="text-muted2 fw-400" id="delayLabel">5–10 detik</span>
+        </label>
+        <div class="d-flex gap-2">
+          <div class="flex-fill">
+            <input type="number" class="form-control form-control-sm" id="delayMin"
+                   min="3" max="60" value="5" onchange="updateDelayLabel()" />
+            <div style="font-size:.68rem;color:var(--gray-400);margin-top:3px;">Min</div>
+          </div>
+          <div style="padding-top:6px;color:var(--gray-400);">–</div>
+          <div class="flex-fill">
+            <input type="number" class="form-control form-control-sm" id="delayMax"
+                   min="3" max="60" value="10" onchange="updateDelayLabel()" />
+            <div style="font-size:.68rem;color:var(--gray-400);margin-top:3px;">Max</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-2">
+        <div class="col-6">
+          <label class="form-label fw-600" style="font-size:.75rem;color:var(--gray-700);">Max Retry</label>
+          <select class="form-select form-select-sm" id="retryMax">
+            <option value="1">1×</option>
+            <option value="2">2×</option>
+            <option value="3" selected>3×</option>
+            <option value="5">5×</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label class="form-label fw-600" style="font-size:.75rem;color:var(--gray-700);">Delay Gambar</label>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control" id="imgDelay" min="1" max="10" value="2" step="0.5" />
+            <span class="input-group-text" style="font-size:.72rem;background:var(--gray-50);border-color:var(--gray-200);color:var(--gray-500);">dtk</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="sidebar-section" style="border-bottom:none;">
+      <button class="btn-blast mb-3" id="btnStart" onclick="startBlast()">
+        <i class="bi bi-send-fill"></i>Mulai Blast
+      </button>
+
+      <div class="d-flex gap-2 mb-2">
+        <button class="btn-secondary-action btn-stop-action" id="btnStop" onclick="stopBlast()" disabled>
+          <i class="bi bi-stop-fill"></i>Stop
+        </button>
+        <button class="btn-secondary-action btn-resume-action" id="btnResume" onclick="resumeBlast()"
+                {% if not has_resume %}disabled{% endif %}>
+          <i class="bi bi-play-fill"></i>Resume
+        </button>
+      </div>
+
+      <button class="btn-export-action" id="btnExport" onclick="exportReport()"
+              {% if not has_resume %}disabled{% endif %}>
+        <i class="bi bi-file-earmark-excel-fill"></i>Export Excel
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ══════════════════════════════
+       MAIN CONTENT
+  ══════════════════════════════ -->
+  <main class="main-content">
+
+    <!-- Stats Cards -->
+    <div class="content-heading mb-2">Ringkasan Blast</div>
+    <div class="stats-grid mb-4">
+      <div class="stat-card">
+        <div class="stat-icon purple"><i class="bi bi-people-fill"></i></div>
+        <div>
+          <div class="stat-value" id="statTotal">0</div>
+          <div class="stat-label">Total Target</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green"><i class="bi bi-check-circle-fill"></i></div>
+        <div>
+          <div class="stat-value" style="color:var(--success);" id="statSuccess">0</div>
+          <div class="stat-label">Berhasil</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon red"><i class="bi bi-x-circle-fill"></i></div>
+        <div>
+          <div class="stat-value" style="color:var(--danger);" id="statFailed">0</div>
+          <div class="stat-label">Gagal</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon yellow"><i class="bi bi-skip-forward-fill"></i></div>
+        <div>
+          <div class="stat-value" style="color:var(--warning);" id="statSkipped">0</div>
+          <div class="stat-label">Dilewati</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue"><i class="bi bi-bar-chart-fill"></i></div>
+        <div>
+          <div class="stat-value" style="color:var(--info);" id="statProgress">0%</div>
+          <div class="stat-label">Progress</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="panel mb-3">
+      <div class="panel-header">
+        <div class="panel-title">
+          <i class="bi bi-activity text-red"></i>
+          Progress Blast
+        </div>
+        <span style="font-size:.75rem;color:var(--gray-500);" id="blastStatusText">IDLE</span>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-fill" id="progressBar" style="width:0%"></div>
+      </div>
+
+      <div class="progress-meta">
+        <span id="progressLabel">0 / 0 terkirim</span>
+        <span id="blastTimeText"></span>
+      </div>
+    </div>
+
+    <!-- Console -->
+    <div class="panel mb-3">
+      <div class="panel-header">
+        <div class="panel-title">
+          <i class="bi bi-terminal-fill"></i>
+          Console Log
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          <span style="font-size:.7rem;color:var(--gray-400);" id="logCountBadge">0 entries</span>
+          <button class="btn btn-sm" style="font-size:.72rem;padding:.2rem .6rem;background:var(--gray-100);border:1px solid var(--gray-200);color:var(--gray-600);border-radius:4px;" onclick="clearConsole()">
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <div class="console-wrap">
+        <div class="console-topbar">
+          <div class="console-dots">
+            <div class="console-dot red"></div>
+            <div class="console-dot yellow"></div>
+            <div class="console-dot green"></div>
+          </div>
+          <span class="console-label">blast.log — realtime</span>
+        </div>
+        <div class="console-body" id="consoleContainer">
+          <div class="console-line">
+            <span class="c-time">--:--:--</span>
+            <span class="c-level info">[INFO]</span>
+            <span class="c-msg">CRM Blast IndiHome siap digunakan.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result Table -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <i class="bi bi-table"></i>Hasil Blast
+        </div>
+        <div class="d-flex gap-2">
+          <input type="text" class="form-control form-control-sm" id="tableSearch"
+                 placeholder="Cari nomor / nama..." style="width:180px;font-size:.78rem;"
+                 oninput="filterTable()" />
+          <select class="form-select form-select-sm" id="tableFilter" onchange="filterTable()" style="width:130px;font-size:.78rem;">
+            <option value="">Semua</option>
+            <option value="SUCCESS">Berhasil</option>
+            <option value="FAILED">Gagal</option>
+            <option value="SKIPPED">Dilewati</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="max-height:360px;overflow-y:auto;border:1px solid var(--gray-100);border-radius:var(--radius);">
+        <table class="table table-hover result-table mb-0" id="resultTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nomor IndiHome</th>
+              <th>Nomor WA</th>
+              <th>Nama</th>
+              <th>Status</th>
+              <th>Jam</th>
+              <th>Percobaan</th>
+              <th>Keterangan</th>
+            </tr>
+          </thead>
+          <tbody id="resultTableBody">
+            <tr>
+              <td colspan="8" class="text-center py-5" style="color:var(--gray-400);">
+                <i class="bi bi-inbox d-block mb-2" style="font-size:1.75rem;"></i>
+                Belum ada data. Mulai blast untuk melihat hasil.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ════════════════════════════════════
+     MODAL PREVIEW
+════════════════════════════════════ -->
+<div class="modal fade" id="templatePreviewModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-700 d-flex align-items-center gap-2">
+          <i class="bi bi-eye text-red"></i>Preview Template
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="previewWarnings" class="alert alert-warning d-none" style="font-size:.82rem;">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <strong>Placeholder tidak ditemukan:</strong>
+          <span id="previewWarningList"></span>
+        </div>
+        <div class="preview-message-box" id="previewContent">
+          <span style="color:var(--gray-400);">Memuat preview...</span>
+        </div>
+        <div class="mt-3" style="font-size:.75rem;color:var(--gray-400);">
+          <i class="bi bi-info-circle me-1"></i>
+          Preview menggunakan data pelanggan pertama atau contoh data.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
