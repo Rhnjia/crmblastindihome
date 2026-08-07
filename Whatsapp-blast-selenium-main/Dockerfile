@@ -49,20 +49,22 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 # ── Copy source code ──────────────────────────────────────────
 COPY crm_blast/ ./
 
+# ── Copy & set up entrypoint script ──────────────────────────
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # ── Create required folders ───────────────────────────────────
 RUN mkdir -p uploads reports logs data chrome_profile
 
-# ── Expose port (Railway injects $PORT dynamically) ─────────────
-EXPOSE ${PORT:-5000}
+# ── Expose port (Railway injects $PORT dynamically) ──────────
+EXPOSE 8080
 
-# ── Environment: force headless Chrome di cloud ───────────────
+# ── Environment defaults ──────────────────────────────────────
 ENV DISPLAY=:99
 ENV CHROME_HEADLESS=true
 ENV FLASK_HOST=0.0.0.0
-ENV FLASK_PORT=5000
 ENV FLASK_DEBUG=false
 
-# ── Start app via gunicorn ────────────────────────────────────
-# ENTRYPOINT shell form (not exec form) is required so the shell
-# expands ${PORT:-5000} at runtime — Railway injects $PORT dynamically.
-ENTRYPOINT gunicorn --bind 0.0.0.0:${PORT:-5000} --timeout 120 --workers 1 --threads 4 app:app
+# ── Use shell script entrypoint for guaranteed $PORT expansion ─
+# CMD here is the default; Railway can override via startCommand
+CMD ["/entrypoint.sh"]
